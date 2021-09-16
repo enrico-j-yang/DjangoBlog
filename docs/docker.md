@@ -1,16 +1,14 @@
 # 使用docker部署
 ![Docker Pulls](https://img.shields.io/docker/pulls/liangliangyy/djangoblog)
 ![Docker Image Version (latest by date)](https://img.shields.io/docker/v/liangliangyy/djangoblog?sort=date)
-![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/liangliangyy/djangoblog)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/liangliangyy/djangoblog)  
 
 使用docker部署支持如下两种方式：
 ## docker镜像方式
 本项目已经支持了docker部署，如果你已经有了`mysql`，那么直接使用基础镜像即可，启动命令如下所示：
 ```shell
-docker pull liangliangyy/djangoblog:latest
-docker run -d  -p 8000:8000 -e DJANGO_MYSQL_HOST=mysqlhost -e DJANGO_MYSQL_PASSWORD=mysqlrootpassword -e DJANGO_MYSQL_USER=root -e DJANGO_MYSQL_DATABASE=djangoblog --name djangoblog liangliangyy/djangoblog:latest
+ docker run -d  -p 8000:8000 -e DJANGO_MYSQL_HOST=mysqlhost -e DJANGO_MYSQL_PASSWORD=mysqlrootpassword -e DJANGO_MYSQL_USER=root -e DJANGO_MYSQL_DATABASE=djangoblog --name djangoblog liangliangyy/djangoblog
 ```
-启动完成后，访问 http://127.0.0.1:8000 
 ## 使用docker-compose
 如果你没有mysql等基础服务，那么可以使用`docker-compose`来运行，
 具体命令如下所示:
@@ -20,13 +18,7 @@ docker-compose up -d
 ```
 本方式生成的mysql数据文件在 `bin/datas/mysql` 文件夹。  
 等启动完成后，访问 [http://127.0.0.1](http://127.0.0.1) 即可。
-### 使用es
-如果你期望使用es来作为后端的搜索引擎，那么可以使用如下命令来启动：
-```shell
-docker-compose -f docker-compose.yml -f docker-compose.es.yml build
-docker-compose -f docker-compose.yml -f docker-compose.es.yml up -d
-```
-本方式生成的es数据文件在 `bin/datas/es` 文件夹。
+
 ## 配置说明:
 
 本项目较多配置都基于环境变量，所有的环境变量如下所示:

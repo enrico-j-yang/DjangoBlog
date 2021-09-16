@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 NAME="djangoblog" # Name of the application
 DJANGODIR=/code/DjangoBlog # Django project directory
 USER=root # the user to run as

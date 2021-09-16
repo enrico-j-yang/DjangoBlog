@@ -102,8 +102,7 @@ def load_breadcrumb(article):
 
     return {
         'names': names,
-        'title': article.title,
-        'count': len(names) + 1
+        'title': article.title
     }
 
 

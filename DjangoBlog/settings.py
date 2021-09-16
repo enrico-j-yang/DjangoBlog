@@ -29,12 +29,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY') or 'n9ceqv38)#&mwuat@(mjb_p%em$e8$qyr#fw9ot!=ba6lijx-6'
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_to_bool('DJANGO_DEBUG', True)
+DEBUG = env_to_bool('DJANGO_DEBUG', False)
 # DEBUG = False
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['*', '127.0.0.1', 'example.com']
+ALLOWED_HOSTS = ['*', '127.0.0.1', 'example.com', '192.168.3.35']
 # Application definition
 
 
@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     'oauth',
     'servermanager',
     'owntracks',
-    'compressor'
+    'compressor',
+    'dbbackup', # django-dbbackup
 ]
 
 MIDDLEWARE = [
@@ -103,9 +104,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DJANGO_MYSQL_DATABASE') or 'djangoblog',
-        'USER': os.environ.get('DJANGO_MYSQL_USER') or 'root',
-        'PASSWORD': os.environ.get('DJANGO_MYSQL_PASSWORD') or 'djangoblog_123',
-        'HOST': os.environ.get('DJANGO_MYSQL_HOST') or '127.0.0.1',
+        'USER': os.environ.get('DJANGO_MYSQL_USER') or 'myblog',
+        'PASSWORD': os.environ.get('DJANGO_MYSQL_PASSWORD') or 'myblog_pss123',
+        'HOST': os.environ.get('DJANGO_MYSQL_HOST') or '192.168.3.35',
         'PORT': int(
             os.environ.get('DJANGO_MYSQL_PORT') or 3306),
         'OPTIONS': {
@@ -159,7 +160,7 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 AUTHENTICATION_BACKENDS = [
     'accounts.user_login_backend.EmailOrUsernameModelBackend']
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'collectedstatic')
+STATIC_ROOT = '/var/www/static'
 
 STATIC_URL = '/static/'
 STATICFILES = os.path.join(BASE_DIR, 'static')
@@ -182,6 +183,11 @@ CACHE_CONTROL_MAX_AGE = 2592000
 # cache setting
 CACHES = {
     'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': os.environ.get('DJANGO_MEMCACHED_LOCATION') or '127.0.0.1:11211',
+        'KEY_PREFIX': 'django_test' if TESTING else 'djangoblog',
+        'TIMEOUT': 60 * 60 * 10
+    } if env_to_bool('DJANGO_MEMCACHED_ENABLE', False) else {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'TIMEOUT': 10800,
         'LOCATION': 'unique-snowflake',
@@ -302,3 +308,6 @@ if os.environ.get('DJANGO_ELASTICSEARCH_HOST'):
             'ENGINE': 'DjangoBlog.elasticsearch_backend.ElasticSearchEngine',
         },
     }
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': '/home/pi/backup/DjangoBlog/'}

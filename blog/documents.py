@@ -10,11 +10,10 @@
 @file: documents.py
 @time: 2019-04-05 13:05
 """
-import elasticsearch.client
 from elasticsearch_dsl.connections import connections
 import time
-from blog.models import Article
-from elasticsearch_dsl import Document, InnerDoc, Date, Integer, Long, Text, Object, GeoPoint, Keyword, Boolean
+from blog.models import Article, Category, Tag
+from elasticsearch_dsl import Document, Date, Integer, Long, Keyword, Text, Object, Boolean
 
 from django.conf import settings
 
@@ -23,64 +22,14 @@ ELASTICSEARCH_ENABLED = hasattr(settings, 'ELASTICSEARCH_DSL')
 if ELASTICSEARCH_ENABLED:
     connections.create_connection(
         hosts=[settings.ELASTICSEARCH_DSL['default']['hosts']])
-    from elasticsearch import Elasticsearch
-
-    es = Elasticsearch(settings.ELASTICSEARCH_DSL['default']['hosts'])
-    from elasticsearch.client import IngestClient
-
-    c = IngestClient(es)
-    try:
-        c.get_pipeline('geoip')
-    except elasticsearch.exceptions.NotFoundError:
-        c.put_pipeline('geoip', body='''{
-              "description" : "Add geoip info",
-              "processors" : [
-                {
-                  "geoip" : {
-                    "field" : "ip"
-                  }
-                }
-              ]
-            }''')
-
-
-class GeoIp(InnerDoc):
-    continent_name = Keyword()
-    country_iso_code = Keyword()
-    country_name = Keyword()
-    location = GeoPoint()
-
-
-class UserAgentBrowser(InnerDoc):
-    Family = Keyword()
-    Version = Keyword()
-
-
-class UserAgentOS(UserAgentBrowser):
-    pass
-
-
-class UserAgentDevice(InnerDoc):
-    Family = Keyword()
-    Brand = Keyword()
-    Model = Keyword()
-
-
-class UserAgent(InnerDoc):
-    browser = Object(UserAgentBrowser, required=False)
-    os = Object(UserAgentOS, required=False)
-    device = Object(UserAgentDevice, required=False)
-    string = Text()
-    is_bot = Boolean()
 
 
 class ElapsedTimeDocument(Document):
-    url = Keyword()
+    url = Text()
     time_taken = Long()
     log_datetime = Date()
-    ip = Keyword()
-    geoip = Object(GeoIp, required=False)
-    useragent = Object(UserAgent, required=False)
+    useragent = Text(analyzer='ik_max_word', search_analyzer='ik_smart')
+    ip = Text()
 
     class Index:
         name = 'performance'
@@ -93,15 +42,7 @@ class ElapsedTimeDocument(Document):
         doc_type = 'ElapsedTime'
 
 
-class ElaspedTimeDocumentManager:
-    @staticmethod
-    def build_index():
-        from elasticsearch import Elasticsearch
-        client = Elasticsearch(settings.ELASTICSEARCH_DSL['default']['hosts'])
-        res = client.indices.exists(index="performance")
-        if not res:
-            ElapsedTimeDocument.init()
-
+class ElaspedTimeDocumentManager():
     @staticmethod
     def delete_index():
         from elasticsearch import Elasticsearch
@@ -110,35 +51,20 @@ class ElaspedTimeDocumentManager:
 
     @staticmethod
     def create(url, time_taken, log_datetime, useragent, ip):
-        ElaspedTimeDocumentManager.build_index()
-        ua = UserAgent()
-        ua.browser = UserAgentBrowser()
-        ua.browser.Family = useragent.browser.family
-        ua.browser.Version = useragent.browser.version_string
-
-        ua.os = UserAgentOS()
-        ua.os.Family = useragent.os.family
-        ua.os.Version = useragent.os.version_string
-
-        ua.device = UserAgentDevice()
-        ua.device.Family = useragent.device.family
-        ua.device.Brand = useragent.device.brand
-        ua.device.Model = useragent.device.model
-        ua.string = useragent.ua_string
-        ua.is_bot = useragent.is_bot
-
+        # if not hasattr(ElaspedTimeDocumentManager, 'mapping_created'):
+        #     ElapsedTimeDocument.init()
+        #     setattr(ElaspedTimeDocumentManager, 'mapping_created', True)
         doc = ElapsedTimeDocument(
             meta={
                 'id': int(
                     round(
                         time.time() *
-                        1000))
-            },
+                        1000))},
             url=url,
             time_taken=time_taken,
             log_datetime=log_datetime,
-            useragent=ua, ip=ip)
-        doc.save(pipeline="geoip")
+            useragent=useragent, ip=ip)
+        doc.save()
 
 
 class ArticleDocument(Document):
