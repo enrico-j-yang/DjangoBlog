@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.24.0 (4a2a0458)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nginx
+  name: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      io.kompose.service: nginx
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.24.0 (4a2a0458)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: nginx
+    spec:
+      containers:
+        - image: nginx:latest
+          name: nginx
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          resources: {}
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+            - name: static-pv-volume
+              mountPath: /code/DjangoBlog/collectedstatic
+      restartPolicy: Always
+      volumes:
+        - name: nginx-conf
+          hostPath:
+            type: File
+            path: /home/pi/Documents/repos/DjangoBlog/bin/nginx.conf
+        - name: static-pv-volume
+          hostPath:
+            path: /home/pi/Documents/repos/DjangoBlog/collectedstatic
+status: {}

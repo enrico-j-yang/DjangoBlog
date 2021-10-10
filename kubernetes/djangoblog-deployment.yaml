@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.24.0 (4a2a0458)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: djangoblog
+  name: djangoblog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      io.kompose.service: djangoblog
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.24.0 (4a2a0458)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: djangoblog
+    spec:
+      containers:
+        - env:
+            - name: DJANGO_MYSQL_DATABASE
+              value: djangoblog
+            - name: DJANGO_MYSQL_HOST
+              value: 192.168.3.35
+            - name: DJANGO_MYSQL_PASSWORD
+              value: myblog_pss123
+            - name: DJANGO_MYSQL_PORT
+              value: "3306"
+            - name: DJANGO_MYSQL_USER
+              value: myblog
+            - name: DJANGO_MEMCACHED_LOCATION
+              value: memcached:11211
+          image: kelequy/djangoblog
+          name: djangoblog
+          ports:
+            - containerPort: 8000
+          resources: {}
+          volumeMounts:
+            - name: static-pv-volume
+              mountPath: /code/DjangoBlog/collectedstatic
+      restartPolicy: Always
+      volumes:
+        - name: static-pv-volume
+          hostPath:
+            path: /home/pi/Documents/repos/DjangoBlog/collectedstatic
+status: {}
